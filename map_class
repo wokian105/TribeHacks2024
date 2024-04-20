@@ -1,0 +1,65 @@
+class Map:
+    def __init__(self):
+        self.building_dictionary = {}
+        self.start = None
+        self.path = []
+        self.head = None #for starting the proccess of building the graph
+    
+    def add_building(self, building_name, series_of_buildings_connected, series_of_lengths_of_connected_buildings, position):
+            """innitializes a building node and connects it to other buildings format: 'building', 'connected_building, ...', 'length'"""
+            newnode = self.Node(position)
+            self.building_dictionary[f"{building_name}"] = newnode
+            #add to dictionary
+            connected_buildings = series_of_buildings_connected.split(", ")
+            connected_buildings_lengths = series_of_lengths_of_connected_buildings.split(", ")
+            for i in range(len(connected_buildings)):
+                newedge = self.Edge(newnode, connected_buildings[i], connected_buildings_lengths[i])
+                newnode.connected_edges.append(newedge)            
+
+    def search(self, entrance, target):
+        start = self.building_dictionary[entrance]
+        seen = []
+        at = [start]
+        going = []
+        while len(at) != 0:
+            for current in at:
+                for edge in current.connected_edges:
+                    seenvalue = edge.walk_to_next_node(current)
+                    if seenvalue.total_length_walked > edge.legth + current.total_length or seenvalue.total_length_walked == 0:
+                        going.append(seenvalue)
+                seen.append(current)
+                at.remove(current)
+            
+
+        pass
+
+    class Node:
+        def __init__(self, position):
+            self.connected_edges = []
+            self.coordinates = position
+            self.back = None
+            self.total_length_walked = 0
+        
+    class Edge:
+        def __init__(self, node1, node2, length):
+            self.node1 = node1
+            self.node2 = node2
+            self.length = length
+
+        def walk_to_next_node(self, node):
+            """walks to the other node in an edge and gives the length"""
+            if node == self.node1:
+                if self.node2.total_length_walked > self.node1.total_length_walked + self.length or self.node2.total_length_walked == 0:
+                    self.node2.total_length_walked += self.length
+                    self.back = node
+                return (self.node2)
+            else:
+                if self.node1.total_length_walked > self.node2.total_length_walked + self.length or self.node1.total_length_walked == 0:
+                    self.node1.total_length_walked += self.length
+                    self.back = node
+                return (self.node1)
+        
+"""testing"""
+Sunken_Garden = Map()
+Sunken_Garden.add_building("Wren", "Ewell, Tucker", "30, 30", "50*, 40*")
+print(Sunken_Garden.building_dictionary["Wren"].connected_edges)
