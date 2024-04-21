@@ -5,15 +5,27 @@ class Map:
         self.path = []
         self.head = None #for starting the proccess of building the graph
     
-    def add_building(self, building_name, series_of_buildings_connected, series_of_lengths_of_connected_buildings, position):
+    def add_building(self, building_name, series_of_buildings_connected, series_of_lengths_of_connected_buildings, position, connects_to = None):
             """innitializes a building node and connects it to other buildings format: 'building', 'connected_building, ...', 'length'"""
-            newnode = self.Node(position)
-            self.building_dictionary[f"{building_name}"] = newnode
+            if connects_to == None:
+                newnode = self.Node(position)
+                self.building_dictionary[f"{building_name}"] = newnode
+            else:
+                newnode = self.Node(position)
+                edges_of_connected_to = self.building_dictionary[connects_to].connected_edges
+                for edge in edges_of_connected_to:
+                    if edge.node2 == building_name:
+                        edge.node2 = newnode
+                        self.building_dictionary[f"{building_name}"] = newnode
+                        edge.node2.connected_edges.append(edge)
             #add to dictionary
             connected_buildings = series_of_buildings_connected.split(", ")
             connected_buildings_lengths = series_of_lengths_of_connected_buildings.split(", ")
             for i in range(len(connected_buildings)):
-                newedge = self.Edge(newnode, connected_buildings[i], connected_buildings_lengths[i])
+                building = connected_buildings[i]
+                if building in self.building_dictionary.keys():
+                    building = self.building_dictionary[building]
+                newedge = self.Edge(newnode, building, connected_buildings_lengths[i])
                 newnode.connected_edges.append(newedge)            
 
     def search(self, entrance, target):
@@ -61,5 +73,17 @@ class Map:
         
 """testing"""
 Sunken_Garden = Map()
-Sunken_Garden.add_building("Wren", "Ewell, Tucker", "30, 30", "50*, 40*")
-print(Sunken_Garden.building_dictionary["Wren"].connected_edges)
+Sunken_Garden.add_building("Wren", "Ewell, Tucker", "30, 30", "Wren*")
+Sunken_Garden.add_building("Ewell", "Washington, Tucker", "30, 30", "Ewell*", "Wren")
+Sunken_Garden.add_building("Tucker", "Chancellor, Ewell", "30, 30", "Tucker*", "Wren")
+Sunken_Garden.add_building("Chancellor", "James Blair", "30, 30", "Chancellor*", "Tucker")
+test = input("type a bulding name ")
+for i in Sunken_Garden.building_dictionary[test].connected_edges:
+    if isinstance(i.node1, str):
+        print(i.node1)
+    else:
+        print(i.node1.coordinates)
+    if isinstance(i.node2, str):
+        print(i.node2)
+    else:
+        print(i.node2.coordinates)
