@@ -2,7 +2,6 @@ class Map:
     def __init__(self):
         self.building_dictionary = {}
         self.start = None
-        self.path = []
         self.head = None #for starting the proccess of building the graph
     
     def add_building(self, building_name, series_of_buildings_connected, length, position, connects_to = None):
@@ -19,11 +18,12 @@ class Map:
                         self.building_dictionary[building_name] = newnode
                         edge.node2.connected_edges.append(edge)
             #add to dictionary
-            connected_buildings = series_of_buildings_connected.split(", ")
-            for i in range(len(connected_buildings)):
-                building = connected_buildings[i]
-                newedge = self.Edge(newnode, building, length)
-                newnode.connected_edges.append(newedge)            
+            if series_of_buildings_connected != None:
+                connected_buildings = series_of_buildings_connected.split(", ")
+                for i in range(len(connected_buildings)):
+                    building = connected_buildings[i]
+                    newedge = self.Edge(newnode, building, length)
+                    newnode.connected_edges.append(newedge)            
 
     def add_connection(self, node1, node2, length):
         node1 = self.building_dictionary[node1]
@@ -41,11 +41,25 @@ class Map:
             for current in at:
                 for edge in current.connected_edges:
                     seenvalue = edge.walk_to_next_node(current)
-                    if seenvalue.total_length_walked > edge.legth + current.total_length or seenvalue.total_length_walked == 0:
+                    if seenvalue.total_length_walked > edge.length + current.total_length_walked or seenvalue.total_length_walked == 0 and seenvalue not in seen and seenvalue not in at:
                         going.append(seenvalue)
                         seenvalue.back = current
+                        seenvalue.total_length_walked = current.total_length_walked + edge.length
                 seen.append(current)
                 at.remove(current)
+            for i in going:
+                at.append(i)
+                going.remove(i)
+        return self.retrace_from_end(entrance, target)
+        
+    def retrace_from_end(self, entrance, target):
+        current = self.building_dictionary[target]
+        route = []
+        while current.back != None:
+            route.append(current)
+            current = current.back
+        route.append(self.building_dictionary[entrance])
+        return route
 
     class Node:
         def __init__(self, position):
@@ -63,14 +77,10 @@ class Map:
         def walk_to_next_node(self, node):
             """walks to the other node in an edge and gives the length"""
             if node == self.node1:
-                if self.node2.total_length_walked > self.node1.total_length_walked + self.length or self.node2.total_length_walked == 0:
-                    self.node2.total_length_walked += self.length
-                    self.back = node
+                self.back = node
                 return (self.node2)
             else:
-                if self.node1.total_length_walked > self.node2.total_length_walked + self.length or self.node1.total_length_walked == 0:
-                    self.node1.total_length_walked += self.length
-                    self.back = node
+                self.back = node
                 return (self.node1)
         
 """testing"""
@@ -86,9 +96,11 @@ Sunken_Garden.add_building("Washington", "McGlothlin", 30, "Washington*", "Ewell
 Sunken_Garden.add_building("McGlothlin", "ISC", 30, "McGlothlin*", "Washington")
 Sunken_Garden.add_connection("Chancellor", "Washington", 30)
 Sunken_Garden.add_connection("Blair", "McGlothlin", 30)
-test = input("type a bulding name ")
-print(Sunken_Garden.building_dictionary)
-for i in Sunken_Garden.building_dictionary[test].connected_edges:
+Sunken_Garden.add_building("ISC", None, 30, "ISC*", "McGlothlin")
+Sunken_Garden.add_building("Sadler", None, 30, "ISC*", "Blair")
+#test = input("type a bulding name ")
+#print(Sunken_Garden.building_dictionary)
+"""for i in Sunken_Garden.building_dictionary[test].connected_edges:
     if isinstance(i.node1, str):
         print(i.node1)
     else:
@@ -97,3 +109,11 @@ for i in Sunken_Garden.building_dictionary[test].connected_edges:
         print(i.node2)
     else:
         print(i.node2.coordinates)
+"""
+print(Sunken_Garden.search("Wren", "McGlothlin"))
+
+print(Sunken_Garden.building_dictionary["Wren"])
+print(Sunken_Garden.building_dictionary["Ewell"])
+print(Sunken_Garden.building_dictionary["Washington"])
+
+print(Sunken_Garden.building_dictionary["McGlothlin"])
